@@ -9,6 +9,15 @@ const client = new AgoraClient({
 
 export async function POST(req) {
   const { agentId } = await req.json();
-  await client.stopAgent(agentId);
-  return NextResponse.json({ stopped: true });
+  if (!agentId) {
+    return NextResponse.json({ stopped: false, warning: 'No agentId provided' });
+  }
+  try {
+    await client.stopAgent(agentId);
+    return NextResponse.json({ stopped: true });
+  } catch (err) {
+    // Agent may have already stopped — treat as success so the frontend can finish cleanup
+    console.warn('stopAgent warning:', err?.message ?? err);
+    return NextResponse.json({ stopped: false, warning: err?.message ?? String(err) });
+  }
 }
